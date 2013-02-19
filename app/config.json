@@ -1,0 +1,11 @@
+{
+	"global": {},
+	"env:development": {},
+	"env:test": {},
+	"env:production": {},
+	"os:ios": {},
+	"os:android": {},
+	"dependencies": {
+    "com.madrocket.ti.slidemenu": "0.2.0"
+  }
+}

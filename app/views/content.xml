@@ -1,0 +1,6 @@
+<Alloy>
+	<View class="container" backgroundColor="red" layout="vertical">
+    <Button width="100%" id="lb">Hello, Left</Button>
+    <Button width="100%" id="rb">Hello, Right</Button>
+	</View>
+</Alloy>
