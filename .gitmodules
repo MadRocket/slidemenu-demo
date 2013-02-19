@@ -1,0 +1,3 @@
+[submodule "app/widgets/com.madrocket.ti.slidemenu"]
+	path = app/widgets/com.madrocket.ti.slidemenu
+	url = git://github.com/MadRocket/com.madrocket.ti.slidemenu.git
