@@ -1,28 +1,37 @@
 function ucfirst(text) {
-    return text ? text[0].toUpperCase() + text.substr(1) : text;
+    if (!text) return text;
+    return text[0].toUpperCase() + text.substr(1);
 }
 
 function isTabletFallback() {
-    return !(Math.min(Ti.Platform.displayCaps.platformHeight, Ti.Platform.displayCaps.platformWidth) < 700);
+    return !(700 > Math.min(Ti.Platform.displayCaps.platformHeight, Ti.Platform.displayCaps.platformWidth));
 }
 
 var _ = require("alloy/underscore")._, Backbone = require("alloy/backbone");
+
+var DEFAULT_WIDGET = "widget";
+
+exports.version = "1.1.0";
 
 exports._ = _;
 
 exports.Backbone = Backbone;
 
 exports.M = function(name, modelDesc, migrations) {
-    var config = modelDesc.config, type = (config.adapter ? config.adapter.type : null) || "localDefault";
-    type === "localDefault" && (type = "sql");
-    var adapter = require("alloy/sync/" + type), extendObj = {
+    var config = modelDesc.config;
+    var type = (config.adapter ? config.adapter.type : null) || "localDefault";
+    "localDefault" === type && (type = "sql");
+    var adapter = require("alloy/sync/" + type);
+    var extendObj = {
         defaults: config.defaults,
         sync: function(method, model, opts) {
-            var config = model.config || {}, adapterObj = config.adapter || {}, type = (config.adapter ? config.adapter.type : null) || "localDefault";
-            type === "localDefault" && (type = "sql");
-            require("alloy/sync/" + type).sync(model, method, opts);
+            var config = model.config || {};
+            var type = (config.adapter ? config.adapter.type : null) || "localDefault";
+            "localDefault" === type && (type = "sql");
+            require("alloy/sync/" + type).sync(method, model, opts);
         }
-    }, extendClass = {};
+    };
+    var extendClass = {};
     migrations && (extendClass.migrations = migrations);
     _.isFunction(adapter.beforeModelCreate) && (config = adapter.beforeModelCreate(config, name) || config);
     var Model = Backbone.Model.extend(extendObj, extendClass);
@@ -36,89 +45,35 @@ exports.C = function(name, modelDesc, model) {
     var extendObj = {
         model: model,
         sync: function(method, model, opts) {
-            var config = model.config || {}, type = (config.adapter ? config.adapter.type : null) || "localDefault";
-            type === "localDefault" && (type = "sql");
-            require("alloy/sync/" + type).sync(model, method, opts);
+            var config = model.config || {};
+            var type = (config.adapter ? config.adapter.type : null) || "localDefault";
+            "localDefault" === type && (type = "sql");
+            require("alloy/sync/" + type).sync(method, model, opts);
         }
-    }, Collection = Backbone.Collection.extend(extendObj), config = Collection.prototype.config = model.prototype.config, type = (config.adapter ? config.adapter.type : null) || "localDefault", adapter = require("alloy/sync/" + type);
+    };
+    var Collection = Backbone.Collection.extend(extendObj);
+    var config = Collection.prototype.config = model.prototype.config;
+    var type = (config.adapter ? config.adapter.type : null) || "localDefault";
+    var adapter = require("alloy/sync/" + type);
     _.isFunction(adapter.afterCollectionCreate) && adapter.afterCollectionCreate(Collection);
     _.isFunction(modelDesc.extendCollection) && (Collection = modelDesc.extendCollection(Collection) || Collection);
     return Collection;
 };
 
-exports.A = function(t, type, parent) {
-    _.extend(t, Backbone.Events);
-    (function() {
-        var al = t.addEventListener, rl = t.removeEventListener, oo = t.on, of = t.off, tg = t.trigger, cbs = {}, ctx = _.extend({}, Backbone.Events);
-        if (!al || !rl) return;
-        t.trigger = function() {
-            ctx.trigger.apply(ctx, Array.prototype.slice.apply(arguments));
-        };
-        t.on = function(e, cb, context) {
-            var wcb = function(evt) {
-                try {
-                    _.bind(tg, ctx, e, evt)();
-                } catch (E) {
-                    Ti.API.error("Error triggering '" + e + "' event: " + E);
-                }
-            };
-            if (!cbs[e]) {
-                cbs[e] = {};
-                al(e, wcb);
-            }
-            cbs[e][cb] = wcb;
-            _.bind(oo, ctx, e, cb, context)();
-        };
-        t.off = function(e, cb, context) {
-            var f = cbs[e] ? cbs[e][cb] : null;
-            if (f) {
-                _.bind(of, ctx, e, cb, context)();
-                delete cbs[e][cb];
-                if (cbs[e].length === 0) {
-                    delete cbs[e];
-                    rl(e, f);
-                }
-                f = null;
-            }
-        };
-    })();
-    return t;
-};
-
-exports.getWidget = function(id, name, args) {
-    Ti.API.warn("Alloy.getWidget() is deprecated, use Alloy.createWidget() instead.");
-    Ti.API.warn("Alloy.getWidget() will be removed in Alloy 0.4.0");
-    return exports.createWidget(id, name, args);
-};
-
 exports.createWidget = function(id, name, args) {
-    return new (require("alloy/widgets/" + id + "/controllers/" + (name || "widget")))(args);
-};
-
-exports.getController = function(name, args) {
-    Ti.API.warn("Alloy.getController() is deprecated, use Alloy.createController() instead.");
-    Ti.API.warn("Alloy.getController() will be removed in Alloy 0.4.0");
-    return exports.createController(name, args);
+    if ("undefined" != typeof name && null !== name && _.isObject(name) && !_.isString(name)) {
+        args = name;
+        name = DEFAULT_WIDGET;
+    }
+    return new (require("alloy/widgets/" + id + "/controllers/" + (name || DEFAULT_WIDGET)))(args);
 };
 
 exports.createController = function(name, args) {
     return new (require("alloy/controllers/" + name))(args);
 };
 
-exports.getModel = function(name, args) {
-    Ti.API.warn("Alloy.getModel() is deprecated, use Alloy.createModel() instead.");
-    Ti.API.warn("Alloy.getModel() will be removed in Alloy 0.4.0");
-    return exports.createModel(name, args);
-};
-
 exports.createModel = function(name, args) {
     return new (require("alloy/models/" + ucfirst(name)).Model)(args);
-};
-
-exports.getCollection = function(name, args) {
-    Ti.API.warn("Alloy.getCollection() is deprecated, use Alloy.createCollection() instead.");
-    Ti.API.warn("Alloy.getCollection() will be removed in Alloy 0.4.0");
-    return exports.createCollection(name, args);
 };
 
 exports.createCollection = function(name, args) {
@@ -126,12 +81,10 @@ exports.createCollection = function(name, args) {
 };
 
 exports.isTablet = function() {
-    return Ti.Platform.osname === "ipad";
+    return "ipad" === Ti.Platform.osname;
 }();
 
 exports.isHandheld = !exports.isTablet;
-
-exports.globals = {};
 
 exports.Globals = {};
 
@@ -148,5 +101,3 @@ exports.Collections.instance = function(name) {
 };
 
 exports.CFG = require("alloy/CFG");
-
-exports.version = "0.3.6";

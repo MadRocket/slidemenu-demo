@@ -1,41 +1,45 @@
 function WPATH(s) {
-    var index = s.lastIndexOf("/"), path = index === -1 ? "com.madrocket.ti.slidemenu/" + s : s.substring(0, index) + "/com.madrocket.ti.slidemenu/" + s.substring(index + 1);
+    var index = s.lastIndexOf("/");
+    var path = -1 === index ? "com.madrocket.ti.slidemenu/" + s : s.substring(0, index) + "/com.madrocket.ti.slidemenu/" + s.substring(index + 1);
     return path;
 }
 
 function Controller() {
+    new (require("alloy/widget"))("com.madrocket.ti.slidemenu");
     require("alloy/controllers/BaseController").apply(this, Array.prototype.slice.call(arguments));
-    $model = arguments[0] ? arguments[0].$model : null;
-    var $ = this, exports = {}, __defers = {};
-    $.__views.slideMenu = A$(Ti.UI.createWindow({
+    arguments[0] ? arguments[0]["__parentSymbol"] : null;
+    arguments[0] ? arguments[0]["$model"] : null;
+    var $ = this;
+    var exports = {};
+    $.__views.slideMenu = Ti.UI.createWindow({
         id: "slideMenu"
-    }), "Window", null);
-    $.addTopLevelView($.__views.slideMenu);
-    $.__views.leftDrawer = A$(Ti.UI.createWindow({
+    });
+    $.__views.slideMenu && $.addTopLevelView($.__views.slideMenu);
+    $.__views.leftDrawer = Ti.UI.createWindow({
         id: "leftDrawer",
         top: "0",
         left: "0",
         zIndex: "1"
-    }), "Window", $.__views.slideMenu);
+    });
     $.__views.slideMenu.add($.__views.leftDrawer);
-    $.__views.content = A$(Ti.UI.createWindow({
+    $.__views.content = Ti.UI.createWindow({
         id: "content",
         top: "0",
         left: "0",
         zIndex: "10"
-    }), "Window", $.__views.slideMenu);
+    });
     $.__views.slideMenu.add($.__views.content);
-    $.__views.rightDrawer = A$(Ti.UI.createWindow({
+    $.__views.rightDrawer = Ti.UI.createWindow({
         id: "rightDrawer",
         top: "0",
         left: "0",
         zIndex: "1"
-    }), "Window", $.__views.slideMenu);
+    });
     $.__views.slideMenu.add($.__views.rightDrawer);
     exports.destroy = function() {};
     _.extend($, $.__views);
     var drawer = {
-        is_opened: !1,
+        is_opened: false,
         initialize: function(content) {
             this.setWidth(content.width);
             this.add(content);
@@ -43,12 +47,12 @@ function Controller() {
         openDrawer: function() {
             this.fireEvent("open");
             $.content.animate(this.getDrawerOpenAnimation());
-            this.is_opened = !0;
+            this.is_opened = true;
         },
         closeDrawer: function() {
             this.fireEvent("close");
             $.content.animate(this.getDrawerCloseAnimation());
-            this.is_opened = !1;
+            this.is_opened = false;
         },
         toggleDrawer: function() {
             this.is_opened ? this.closeDrawer() : this.openDrawer();
@@ -88,31 +92,38 @@ function Controller() {
             });
         }
     });
-    var touchStartX = 0, touchStarted = !1;
+    var touchStartX = 0;
+    var touchStarted = false;
     $.content.addEventListener("touchstart", function(event) {
         touchStartX = parseInt(event.x, 10);
-        touchStarted = !0;
+        touchStarted = true;
     });
     $.content.addEventListener("touchend", function(event) {
-        touchStarted = !1;
-        var coords = event.source.convertPointToView({
+        touchStarted = false;
+        event.source.convertPointToView({
             x: event.x,
             y: event.y
-        }, $.slideMenu), touchEndX = parseInt(event.x, 10), delta = touchEndX - touchStartX;
-        if (delta == 0) return !1;
+        }, $.slideMenu);
+        var touchEndX = parseInt(event.x, 10);
+        var delta = touchEndX - touchStartX;
+        if (0 == delta) return false;
         if ($.content.left > 0) {
             delta > 10 ? $.leftDrawer.openDrawer() : $.leftDrawer.closeDrawer();
-            delta < -5 ? $.leftDrawer.closeDrawer() : $.leftDrawer.openDrawer();
+            -5 > delta ? $.leftDrawer.closeDrawer() : $.leftDrawer.openDrawer();
         } else {
             delta > 5 ? $.rightDrawer.closeDrawer() : $.rightDrawer.openDrawer();
-            delta < -10 ? $.rightDrawer.openDrawer() : $.rightDrawer.closeDrawer();
+            -10 > delta ? $.rightDrawer.openDrawer() : $.rightDrawer.closeDrawer();
         }
     });
     $.content.addEventListener("touchmove", function(event) {
         var coords = event.source.convertPointToView({
             x: event.x,
             y: event.y
-        }, $.slideMenu), _x = parseInt(coords.x, 10), newLeft = _x - touchStartX, swipeToRight = newLeft > 0 ? !0 : !1, swipeToLeft = newLeft < 0 ? !0 : !1;
+        }, $.slideMenu);
+        var _x = parseInt(coords.x, 10);
+        var newLeft = _x - touchStartX;
+        var swipeToRight = newLeft > 0 ? true : false;
+        var swipeToLeft = 0 > newLeft ? true : false;
         if (touchStarted) {
             if (swipeToRight) {
                 $.leftDrawer.zIndex = 2;
@@ -121,26 +132,26 @@ function Controller() {
                 $.leftDrawer.zIndex = 1;
                 $.rightDrawer.zIndex = 2;
             }
-            if (swipeToRight && newLeft <= $.leftDrawer.width || swipeToLeft && newLeft >= -$.rightDrawer.width) $.content.left = newLeft;
+            (swipeToRight && $.leftDrawer.width >= newLeft || swipeToLeft && newLeft >= -$.rightDrawer.width) && ($.content.left = newLeft);
         }
-        newLeft > 10 && (touchStarted = !0);
+        newLeft > 10 && (touchStarted = true);
     });
-    $.leftDrawer.on("open", function() {
-        $.rightDrawer.is_opened = !1;
+    $.leftDrawer.addEventListener("open", function() {
+        $.rightDrawer.is_opened = false;
         $.leftDrawer.zIndex = 2;
         $.rightDrawer.zIndex = 1;
         $.trigger("open:[left]");
     });
-    $.leftDrawer.on("close", function() {
+    $.leftDrawer.addEventListener("close", function() {
         $.trigger("close:[left]");
     });
-    $.rightDrawer.on("open", function() {
-        $.leftDrawer.is_opened = !1;
+    $.rightDrawer.addEventListener("open", function() {
+        $.leftDrawer.is_opened = false;
         $.leftDrawer.zIndex = 1;
         $.rightDrawer.zIndex = 2;
         $.trigger("open:[right]");
     });
-    $.rightDrawer.on("close", function() {
+    $.rightDrawer.addEventListener("close", function() {
         $.trigger("close:[right]");
     });
     exports.init = function(options) {
@@ -157,6 +168,6 @@ function Controller() {
     _.extend($, exports);
 }
 
-var Alloy = require("alloy"), Backbone = Alloy.Backbone, _ = Alloy._, A$ = Alloy.A, $model;
+var Alloy = require("alloy"), Backbone = Alloy.Backbone, _ = Alloy._;
 
 module.exports = Controller;

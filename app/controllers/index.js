@@ -7,16 +7,24 @@ $.menu.init({
 
 $.menu.content.width = 320;
 
-content.lb.on('singletap', function(){
+content.lb.addEventListener('singletap', function(){
   $.menu.toggleLeftDrawer();
 });
-content.rb.on('singletap', function(){
+content.rb.addEventListener('singletap', function(){
   $.menu.toggleRightDrawer();
 });
 
-$.menu.on('open:[left]', function(){});
-$.menu.on('close:[left]', function(){});
-$.menu.on('open:[right]', function(){});
-$.menu.on('close:[right]', function(){});
+$.menu.on('open:[left]', function(){
+    console.log('left');
+});
+$.menu.on('close:[left]', function(){
+    console.log('left');
+});
+$.menu.on('open:[right]', function(){
+    console.log('left');
+});
+$.menu.on('close:[right]', function(){
+    console.log('left');
+});
 
 $.index.open();

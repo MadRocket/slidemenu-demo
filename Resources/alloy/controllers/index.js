@@ -1,14 +1,17 @@
 function Controller() {
     require("alloy/controllers/BaseController").apply(this, Array.prototype.slice.call(arguments));
-    $model = arguments[0] ? arguments[0].$model : null;
-    var $ = this, exports = {}, __defers = {};
-    $.__views.index = A$(Ti.UI.createWindow({
+    arguments[0] ? arguments[0]["__parentSymbol"] : null;
+    arguments[0] ? arguments[0]["$model"] : null;
+    var $ = this;
+    var exports = {};
+    $.__views.index = Ti.UI.createWindow({
         backgroundColor: "white",
         id: "index"
-    }), "Window", null);
-    $.addTopLevelView($.__views.index);
+    });
+    $.__views.index && $.addTopLevelView($.__views.index);
     $.__views.menu = Alloy.createWidget("com.madrocket.ti.slidemenu", "widget", {
-        id: "menu"
+        id: "menu",
+        __parentSymbol: $.__views.index
     });
     $.__views.menu.setParent($.__views.index);
     exports.destroy = function() {};
@@ -20,20 +23,28 @@ function Controller() {
         content: content.getView()
     });
     $.menu.content.width = 320;
-    content.lb.on("singletap", function() {
+    content.lb.addEventListener("singletap", function() {
         $.menu.toggleLeftDrawer();
     });
-    content.rb.on("singletap", function() {
+    content.rb.addEventListener("singletap", function() {
         $.menu.toggleRightDrawer();
     });
-    $.menu.on("open:[left]", function() {});
-    $.menu.on("close:[left]", function() {});
-    $.menu.on("open:[right]", function() {});
-    $.menu.on("close:[right]", function() {});
+    $.menu.on("open:[left]", function() {
+        console.log("left");
+    });
+    $.menu.on("close:[left]", function() {
+        console.log("left");
+    });
+    $.menu.on("open:[right]", function() {
+        console.log("left");
+    });
+    $.menu.on("close:[right]", function() {
+        console.log("left");
+    });
     $.index.open();
     _.extend($, exports);
 }
 
-var Alloy = require("alloy"), Backbone = Alloy.Backbone, _ = Alloy._, A$ = Alloy.A, $model;
+var Alloy = require("alloy"), Backbone = Alloy.Backbone, _ = Alloy._;
 
 module.exports = Controller;
